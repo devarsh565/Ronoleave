@@ -22,3 +22,8 @@ timeoutMs = 20000
 [nix]
 channel = "stable-25_05"
 packages = ["postgresql"]
+
+[userenv]
+
+[userenv.shared]
+HR_ADMIN_EMAILS = "ronoellykibet@gmail.com"
