@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "HR Service Desk"
+description = "An AI-enabled employee service desk for grounded HR policy answers, service request drafting and tracking, and carefully routed human support."
+version = "1.0.0"
+id = "artifacts/hr-service-desk"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21333
+
+[services.development]
+run = "pnpm --filter @workspace/hr-service-desk run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/hr-service-desk", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/hr-service-desk/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21333"
+BASE_PATH = "/"
