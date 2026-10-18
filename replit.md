@@ -33,6 +33,7 @@ An AI-enabled employee support desk for approved-policy answers, private service
 - `lib/db/src/schema/hr-service-desk.ts` — PostgreSQL schema
 - `lib/api-spec/openapi.yaml` — source API contract
 - `HR_ADMIN_EMAILS` — server-side allowlist needed to add approved policies and view the HR review queue
+- `README-VSCODE.md` — local VS Code setup and run instructions; `.env.example` contains placeholders only
 
 ## Architecture decisions
 
@@ -57,6 +58,7 @@ An AI-enabled employee support desk for approved-policy answers, private service
 
 - Set `HR_ADMIN_EMAILS` before trying to add policy documents or open the HR review queue; an unset or unmatched allowlist must deny access.
 - The API server starts the Python worker as a child process. Restart `artifacts/api-server: API Server` after backend or Python dependency changes.
+- Outside Replit, set `API_SERVER_ORIGIN` so Vite can proxy local `/api` requests; leave it unset in Replit, which routes the API artifact separately.
 - A human queue status change is not an approval decision; use explicit human communication for any approval.
 
 ## Pointers
