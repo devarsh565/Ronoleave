@@ -1,0 +1,1 @@
+- [Vite dependency cache](vite-dep-cache.md) — stale optimized React versions can survive package changes and workflow restarts.

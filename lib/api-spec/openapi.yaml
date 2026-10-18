@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API for the HR Service Desk
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: hr
+    description: Employee HR service desk
 paths:
   /healthz:
     get:
@@ -24,6 +26,186 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /hr/chat:
+    post:
+      operationId: askHrAssistant
+      tags: [hr]
+      summary: Ask an HR policy question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatInput"
+      responses:
+        "200":
+          description: A grounded answer or an HR escalation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResult"
+        "400":
+          description: Invalid question
+        "401":
+          description: Sign-in required
+  /hr/requests:
+    get:
+      operationId: listMyServiceRequests
+      tags: [hr]
+      summary: List the signed-in employee's requests
+      responses:
+        "200":
+          description: Employee-owned requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequestList"
+        "401":
+          description: Sign-in required
+    post:
+      operationId: createServiceRequest
+      tags: [hr]
+      summary: Submit a service request for human review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceRequestInput"
+      responses:
+        "201":
+          description: Submitted request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
+        "400":
+          description: Invalid request
+        "401":
+          description: Sign-in required
+  /hr/requests/{id}:
+    get:
+      operationId: getMyServiceRequest
+      tags: [hr]
+      summary: Get one request owned by the signed-in employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee-owned request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceRequest"
+        "401":
+          description: Sign-in required
+        "404":
+          description: Request not found
+  /hr/policies:
+    get:
+      operationId: listApprovedPolicies
+      tags: [hr]
+      summary: List approved policy sources and management access
+      responses:
+        "200":
+          description: Approved policy source index
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyIndex"
+        "401":
+          description: Sign-in required
+    post:
+      operationId: createApprovedPolicy
+      tags: [hr]
+      summary: Add an officially approved HR policy source
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyInput"
+      responses:
+        "201":
+          description: Policy added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicySummary"
+        "401":
+          description: Sign-in required
+        "403":
+          description: HR administrator access required
+  /hr/policies/{id}:
+    delete:
+      operationId: deleteApprovedPolicy
+      tags: [hr]
+      summary: Remove an approved policy source
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Policy removed
+        "401":
+          description: Sign-in required
+        "403":
+          description: HR administrator access required
+        "404":
+          description: Policy not found
+  /hr/escalations:
+    get:
+      operationId: listHrEscalations
+      tags: [hr]
+      summary: List unresolved escalations for HR administrators
+      responses:
+        "200":
+          description: HR escalation queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EscalationList"
+        "401":
+          description: Sign-in required
+        "403":
+          description: HR administrator access required
+  /hr/escalations/{id}:
+    patch:
+      operationId: updateHrEscalation
+      tags: [hr]
+      summary: Update the human review status of an escalation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EscalationUpdate"
+      responses:
+        "200":
+          description: Updated escalation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Escalation"
+        "401":
+          description: Sign-in required
+        "403":
+          description: HR administrator access required
+        "404":
+          description: Escalation not found
 components:
   schemas:
     HealthStatus:
@@ -33,4 +215,159 @@ components:
           type: string
       required:
         - status
+    ChatInput:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        conversationId:
+          type: ["string", "null"]
+      required: [message]
+    ChatCitation:
+      type: object
+      properties:
+        policyId:
+          type: string
+        title:
+          type: string
+      required: [policyId, title]
+    TicketReference:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+      required: [id, status]
+    ChatResult:
+      type: object
+      properties:
+        conversationId:
+          type: string
+        answer:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatCitation"
+        escalated:
+          type: boolean
+        escalation:
+          anyOf:
+            - $ref: "#/components/schemas/TicketReference"
+            - type: "null"
+      required: [conversationId, answer, citations, escalated, escalation]
+    ServiceRequestInput:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [leave, it, payroll, documents, other]
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          minLength: 1
+          maxLength: 4000
+      required: [category, title, description]
+    ServiceRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+          enum: [leave, it, payroll, documents, other]
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, category, title, description, status, createdAt]
+    ServiceRequestList:
+      type: object
+      properties:
+        requests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceRequest"
+      required: [requests]
+    PolicyInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        sourceName:
+          type: string
+          minLength: 1
+          maxLength: 200
+        content:
+          type: string
+          minLength: 20
+          maxLength: 50000
+      required: [title, sourceName, content]
+    PolicySummary:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        sourceName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, sourceName, createdAt]
+    PolicyIndex:
+      type: object
+      properties:
+        policies:
+          type: array
+          items:
+            $ref: "#/components/schemas/PolicySummary"
+        canManage:
+          type: boolean
+      required: [policies, canManage]
+    Escalation:
+      type: object
+      properties:
+        id:
+          type: string
+        employeeEmail:
+          type: ["string", "null"]
+        summary:
+          type: string
+        status:
+          type: string
+          enum: [open, reviewing, resolved]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, summary, status, createdAt]
+    EscalationList:
+      type: object
+      properties:
+        escalations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Escalation"
+      required: [escalations]
+    EscalationUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [reviewing, resolved]
+      required: [status]
 
