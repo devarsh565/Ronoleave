@@ -30,7 +30,7 @@ paths:
     post:
       operationId: askHrAssistant
       tags: [hr]
-      summary: Ask an HR policy question
+      summary: Ask the employee support assistant
       requestBody:
         required: true
         content:
@@ -39,7 +39,7 @@ paths:
               $ref: "#/components/schemas/ChatInput"
       responses:
         "200":
-          description: A grounded answer or an HR escalation
+          description: A policy-grounded answer, general answer, greeting, or HR escalation
           content:
             application/json:
               schema:
@@ -246,6 +246,9 @@ components:
       properties:
         conversationId:
           type: string
+        answerType:
+          type: string
+          enum: [policy, general, greeting, clarification, escalated]
         answer:
           type: string
         citations:
@@ -258,7 +261,7 @@ components:
           anyOf:
             - $ref: "#/components/schemas/TicketReference"
             - type: "null"
-      required: [conversationId, answer, citations, escalated, escalation]
+      required: [conversationId, answerType, answer, citations, escalated, escalation]
     ServiceRequestInput:
       type: object
       properties:

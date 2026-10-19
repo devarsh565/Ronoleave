@@ -9,6 +9,7 @@
 export * from './chatCitation';
 export * from './chatInput';
 export * from './chatResult';
+export * from './chatResultAnswerType';
 export * from './escalation';
 export * from './escalationList';
 export * from './escalationStatus';

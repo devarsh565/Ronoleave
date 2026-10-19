@@ -148,7 +148,7 @@ export const getAskHrAssistantUrl = () => {
 }
 
 /**
- * @summary Ask an HR policy question
+ * @summary Ask the employee support assistant
  */
 export const askHrAssistant = async (chatInput: ChatInput, options?: Parameters<typeof customFetch>[1]): Promise<ChatResult> => {
 
@@ -214,7 +214,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AskHrAssistantMutationVariables = {data: BodyType<ChatInput>}
 
     /**
- * @summary Ask an HR policy question
+ * @summary Ask the employee support assistant
  */
 export const useAskHrAssistant = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof askHrAssistant>>, TError,AskHrAssistantMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}

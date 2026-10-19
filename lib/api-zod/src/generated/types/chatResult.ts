@@ -6,10 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ChatCitation } from './chatCitation';
+import type { ChatResultAnswerType } from './chatResultAnswerType';
 import type { TicketReference } from './ticketReference';
 
 export interface ChatResult {
   conversationId: string;
+  answerType: ChatResultAnswerType;
   answer: string;
   citations: ChatCitation[];
   escalated: boolean;

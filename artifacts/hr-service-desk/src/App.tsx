@@ -110,6 +110,17 @@ function errorStatus(error: unknown) {
   return candidate.status ?? candidate.response?.status ?? 0;
 }
 
+function answerTypeLabel(answerType: ChatResult['answerType']) {
+  const labels: Record<ChatResult['answerType'], string> = {
+    policy: 'Approved policy answer',
+    general: 'General information · not company policy',
+    greeting: 'People Desk',
+    clarification: 'A quick clarification',
+    escalated: 'HR follow-up requested',
+  };
+  return labels[answerType];
+}
+
 function ErrorMessage({ message, retry }: { message: string; retry: () => void }) {
   return <div className="error-box" role="alert">
     <span>{message}</span>
@@ -148,7 +159,7 @@ function Landing() {
                 <div className="hero-card-title">Policy source status</div>
                 <div className="signal"><span className="signal-dot" /> Awaiting HR</div>
               </div>
-              <div className="hero-message">Approved policy documents will appear here when HR adds them. Until then, answers need a human source.</div>
+              <div className="hero-message">General questions can get general information. Company-specific policy answers use approved HR sources.</div>
               <div className="source-pill"><BookOpen size={14} /> Approved sources only</div>
               <div className="hero-card-foot">Private to your account · Human review is available</div>
             </div>
@@ -160,7 +171,7 @@ function Landing() {
     <div className="landing-band">
       <div className="page-width trust-line">
         <span className="trust-item"><LockKeyhole size={15} /> Your requests stay tied to your account</span>
-        <span className="trust-item"><FileCheck2 size={15} /> Answers use approved policy sources</span>
+        <span className="trust-item"><FileCheck2 size={15} /> Policy answers cite approved sources</span>
         <span className="trust-item"><Headset size={15} /> Sensitive issues can go to HR</span>
       </div>
     </div>
@@ -170,7 +181,7 @@ function Landing() {
         <p>Find a grounded answer when one is available. When it is not, ask for human help and follow your own requests in one discreet place.</p>
       </div>
       <div className="service-list">
-        <div className="service-row"><span className="service-icon"><MessageCircle size={18} /></span><div><h3>Ask a policy question</h3><p>Responses show their approved sources. No source, no made-up policy answer.</p></div><ArrowDownRight className="service-arrow" size={17} /></div>
+        <div className="service-row"><span className="service-icon"><MessageCircle size={18} /></span><div><h3>Ask the People Desk</h3><p>General answers are clearly labeled. Policy answers cite approved HR sources.</p></div><ArrowDownRight className="service-arrow" size={17} /></div>
         <div className="service-row"><span className="service-icon"><ClipboardList size={18} /></span><div><h3>Submit and track a request</h3><p>Send a service request and see its status in your own account.</p></div><ArrowDownRight className="service-arrow" size={17} /></div>
         <div className="service-row"><span className="service-icon"><ShieldCheck size={18} /></span><div><h3>Bring in a person</h3><p>Escalate a sensitive or unresolved concern for HR follow-up.</p></div><ArrowDownRight className="service-arrow" size={17} /></div>
         <div className="service-row"><span className="service-icon"><Activity size={18} /></span><div><h3>Know what happens next</h3><p>See the current status without exposing another employee's details.</p></div><ArrowDownRight className="service-arrow" size={17} /></div>
@@ -306,27 +317,27 @@ function EmployeeHome() {
   };
   const requestCount = requests.data?.requests?.length;
   return <div>
-    <PageHeading eyebrow="Your support desk" title="How can we help?" subtitle="Ask about an approved policy or send a request to HR. Your workspace is private to your account." />
+    <PageHeading eyebrow="Your support desk" title="How can we help?" subtitle="Ask a general question, check an approved policy, or send a request to HR. Your workspace is private to your account." />
     <div className="portal-grid">
       <section className="panel chat-panel" aria-labelledby="ask-heading">
-        <div className="chat-heading"><div className="panel-header" style={{ margin: 0 }}><div><h2 id="ask-heading">Ask an HR question</h2><div className="panel-subtitle">Policy answers include their source when available.</div></div><div className="secure-line"><LockKeyhole size={13} /> Private</div></div></div>
+        <div className="chat-heading"><div className="panel-header" style={{ margin: 0 }}><div><h2 id="ask-heading">Ask the People Desk</h2><div className="panel-subtitle">General answers are labeled. Policy answers cite approved sources.</div></div><div className="secure-line"><LockKeyhole size={13} /> Private</div></div></div>
         <div className="chat-body" aria-live="polite">
           {ask.isError && <ErrorMessage message="Your question did not go through. No answer was generated." retry={() => ask.reset()} />}
-          {!result && <div className="chat-placeholder"><span className="empty-icon"><MessageCircle size={19} /></span><strong>Ask what you need to know</strong><p>{policies.isLoading ? 'Checking approved policy sources…' : policies.isError ? 'Policy source status is unavailable. Answers should rely only on approved sources.' : policies.data?.policies.length ? 'Ask about an approved policy. Responses include citations when available.' : 'There are currently no approved policy documents. We will not invent a policy answer.'}</p></div>}
-          {result && <div className="answer-card">
-            <div className="answer-label">HR assistant response</div>{result.answer}
+          {!result && <div className="chat-placeholder"><span className="empty-icon"><MessageCircle size={19} /></span><strong>Ask what you need to know</strong><p>{policies.isLoading ? 'Checking approved policy sources…' : policies.isError ? 'Policy source status is unavailable. General questions are welcome; company-specific answers will be routed to HR.' : policies.data?.policies.length ? 'Ask a general question or an approved policy question. Policy answers cite their sources.' : 'General questions are welcome. Company-specific policy answers need an approved source; otherwise, we will route you to HR.'}</p></div>}
+          {result && <div className="answer-card" data-answer-type={result.answerType}>
+            <div className={`answer-label answer-label-${result.answerType}`}>{answerTypeLabel(result.answerType)}</div>{result.answer}
             {result.citations.length > 0
               ? <div className="citation-list" aria-label="Policy citations">{result.citations.map((citation) => <span className="citation" key={citation.policyId}><BookOpen size={12} />{citation.title}</span>)}</div>
-              : <div className="notice" style={{ marginTop: 13 }}><CircleAlert size={15} /> No approved policy citation was returned. Treat this as unresolved and ask HR for guidance.</div>}
+              : result.answerType === 'policy' && <div className="notice" style={{ marginTop: 13 }}><CircleAlert size={15} /> No approved policy citation was returned. Treat this as unresolved and ask HR for guidance.</div>}
             {result.escalated && <div className="notice" style={{ marginTop: 13 }}><Headset size={15} /> This conversation was marked for HR follow-up{result.escalation ? ` (reference ${result.escalation.id}, ${result.escalation.status}).` : '.'} The desk cannot confirm when a response will arrive.</div>}
           </div>}
         </div>
         <form className="chat-form" onSubmit={submitQuestion}>
-          <label className="sr-only" htmlFor="question-input">Your HR question</label>
-          <input id="question-input" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Write a question for HR..." maxLength={4000} required data-testid="input-hr-question" />
+          <label className="sr-only" htmlFor="question-input">Your question</label>
+          <input id="question-input" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask a question or say hello..." maxLength={4000} required data-testid="input-hr-question" />
           <button className="button button-primary" type="submit" disabled={ask.isPending || !question.trim()} data-testid="button-send-question"><Send size={15} /><span>{ask.isPending ? 'Sending' : 'Ask'}</span></button>
         </form>
-        <div className="chat-help">Answers rely only on approved sources. If a policy is missing or unclear, contact HR directly.</div>
+        <div className="chat-help">General answers are not company policy. Company-specific questions use approved sources; sensitive or private matters go to HR.</div>
       </section>
       <aside className="quick-links">
         <div className="panel">
@@ -476,7 +487,7 @@ function PoliciesPage() {
         {!index.isLoading && !index.isError && policies.length > 0 && policies.map((policy) => <div className="policy-row" key={policy.id} data-testid={`row-policy-${policy.id}`}><div><div className="policy-title">{policy.title}</div><div className="policy-source">{policy.sourceName}</div><div className="meta-line">Added {formatDate(policy.createdAt)}</div></div>{canManage && <button className="icon-button" type="button" aria-label={`Remove ${policy.title}`} onClick={() => deletePolicy(policy.id, policy.title)} disabled={remove.isPending} data-testid={`button-delete-policy-${policy.id}`}><Trash2 size={15} /></button>}</div>)}
       </section>
       <aside>
-        <div className="panel privacy-card"><div className="panel-header"><div><h2>Policy source integrity</h2><div className="panel-subtitle">Clear provenance. Human oversight.</div></div><ShieldCheck size={18} /></div><p className="panel-subtitle">The assistant should answer only from approved sources and show citations when it can. If policy coverage is missing or uncertain, route the question to HR rather than guessing.</p></div>
+        <div className="panel privacy-card"><div className="panel-header"><div><h2>Answer guardrails</h2><div className="panel-subtitle">Clear provenance. Human oversight.</div></div><ShieldCheck size={18} /></div><p className="panel-subtitle">General answers are labeled as non-policy guidance. Company-specific policy answers cite approved sources; missing or uncertain information is routed to HR rather than guessed.</p></div>
         <div className="notice" style={{ marginTop: 14 }}><CircleAlert size={16} /><span>A policy answer is not an approval. Leave and policy exceptions require human approval.</span></div>
       </aside>
     </div>

@@ -29,8 +29,20 @@ export interface TicketReference {
   status: string;
 }
 
+export type ChatResultAnswerType = typeof ChatResultAnswerType[keyof typeof ChatResultAnswerType];
+
+
+export const ChatResultAnswerType = {
+  policy: 'policy',
+  general: 'general',
+  greeting: 'greeting',
+  clarification: 'clarification',
+  escalated: 'escalated',
+} as const;
+
 export interface ChatResult {
   conversationId: string;
+  answerType: ChatResultAnswerType;
   answer: string;
   citations: ChatCitation[];
   escalated: boolean;

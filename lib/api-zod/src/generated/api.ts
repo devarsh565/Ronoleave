@@ -18,7 +18,7 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * @summary Ask an HR policy question
+ * @summary Ask the employee support assistant
  */
 export const askHrAssistantBodyMessageMax = 4000;
 
@@ -31,6 +31,7 @@ export const AskHrAssistantBody = zod.object({
 
 export const AskHrAssistantResponse = zod.object({
   "conversationId": zod.string(),
+  "answerType": zod.enum(['policy', 'general', 'greeting', 'clarification', 'escalated']),
   "answer": zod.string(),
   "citations": zod.array(zod.object({
   "policyId": zod.string(),

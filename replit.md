@@ -38,14 +38,16 @@ An AI-enabled employee support desk for approved-policy answers, private service
 ## Architecture decisions
 
 - The Python service binds to loopback; the Express gateway verifies the Clerk session and supplies employee identity. Never accept employee IDs from browser payloads.
-- Policy answers must use approved policy documents stored by an authorized HR administrator. With no matching source or a failed citation check, return the exact unavailable-information fallback and create an HR escalation.
+- Company-specific policy answers must use approved policy documents stored by an authorized HR administrator. With no matching source or a failed citation check, return the exact unavailable-information fallback and create an HR escalation.
+- Clearly general, non-sensitive questions may be answered from public knowledge and must be labeled as general information, not company policy. Simple greetings and thanks should receive friendly, concise replies.
+- Legal, medical, grievance, sensitive, and employee-specific questions remain routed to HR; never answer internal policy or employee-data questions from general model knowledge.
 - Request lists are always scoped to the authenticated employee. The HR review queue is restricted to `HR_ADMIN_EMAILS`.
 - AI can draft guidance but cannot approve leave, requests, exceptions, or policy changes.
 - No company policy documents or outbound HR email/ticket integration are configured by default; do not invent policy data or promise external delivery.
 
 ## Product
 
-- Ask HR questions grounded in cited, administrator-approved policy sources.
+- Ask general, non-sensitive questions or company-policy questions grounded in cited, administrator-approved sources.
 - Submit and track private employee service requests.
 - Route sensitive, unresolved, or explicitly escalated questions to a human HR review queue.
 - Allow authorized HR administrators to manage approved policy text and update queue status.

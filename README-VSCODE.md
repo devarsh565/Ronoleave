@@ -91,6 +91,6 @@ pnpm --filter @workspace/hr-service-desk run dev
 
 ## First-use notes
 
-- No company policy documents are preloaded. Until an HR administrator adds approved policy sources, policy questions intentionally route to HR rather than receive guessed answers.
+- No company policy documents are preloaded. The assistant can answer general, non-sensitive questions and greets employees conversationally; those answers are labeled as general information, not company policy. Until an HR administrator adds approved policy sources, company-specific policy questions route to HR rather than receive guessed answers.
 - Service requests are private to the signed-in employee. AI does not approve leave or policy exceptions.
 - Escalations appear in the internal HR queue; external email or ticket delivery is not configured.
